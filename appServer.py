@@ -12,7 +12,6 @@ def main():
 urls = (
     '/','index',
     '/login','login',
-    '/getMain','getMain',
     '/do','do'
 )
 
@@ -24,17 +23,19 @@ class do:
     def GET(self):
         raise web.SeeOther('/')
     def POST(self):
-        pass
-
-
-class getMain:
-    def GET(self):
-        raise web.SeeOther('/')
-    def POST(self):
-        params = web.data()
-        dic = json.loads(params)
-        print("Client: {} with hash : {} wants to getMain".format(web.ctx['ip'], dic['token']))
-        strJson = objHashMap[dic['token']].getMain()
+        try:
+            params = web.data()
+            dic = json.loads(params)
+            print("Client: {} with hash : {} wants to {}".format(web.ctx['ip'], dic['token'], dic['function']))
+            token = dic['token']
+            func = dic['function']
+        except:
+            return json.dumps({"code":helper.ERROR_POST_PARAMS,"msg":"Parameters error","token":0})
+        try:
+            obj = objHashMap[token]
+        except:
+            return json.dumps({"code":helper.ERROR_OBJ_NOTFOUND,"msg":"Object error","token":0})
+        strJson = obj.doFunction(func)
         if json.loads(strJson)['code']==helper.ERROR_SESSION_EXPIRED:
             objHashMap.pop(dic['token'])
         return strJson
@@ -48,11 +49,13 @@ class login:
         try:
             params = web.data()
             dic = json.loads(params)
+            key = dic['unikey']
+            pw = dic['pw']
         except:
             return json.dumps({"code":helper.ERROR_POST_PARAMS,"msg":"Parameters error","token":0})
 
         objHashMap[instance.__hash__()] = instance
-        return instance.login(dic['unikey'],dic['pw'])
+        return instance.login(key,pw)
 
 
 if __name__ == '__main__':
